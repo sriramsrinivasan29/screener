@@ -140,7 +140,7 @@ def switch(index_ticker):
         return "./dataset/ind_nifty200list.csv"
     elif index_ticker == "Nifty 500":
         return "./dataset/ind_nifty500list.csv"
-     elif index_ticker == "Nifty Smallcap 250":
+    elif index_ticker == "Nifty Smallcap 250":
         return "./dataset/ind_niftysmallcap250list.csv"
          
 def stock_screener(index_ticker):
