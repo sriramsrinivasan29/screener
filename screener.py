@@ -15,8 +15,7 @@ from numpy import *
 from pandas_datareader import data as pdr
 
 
-ROEFlag = False
-ROE_TTM = 0.0
+
 start = dt.datetime(2017, 12, 1)
 now = dt.datetime.now()
 end_date = "2024-01-25"
@@ -328,19 +327,7 @@ def stock_screener(check):
 
 
 
-                # ROE
-                if ROEFlag:
-                    try:
-                        table = si.get_stats(ticker)
-                        table = table.fillna("0.0")
-
-                        ROE_TTM = (
-                            (table.iloc[33]["Value"]).replace("%", "").replace(",", "")
-                        )
-
-                    except:
-
-                        ROE_TTM = 0.0
+                
 
 
                 technical_Rank = Technical_Rank(stock["Adj Close"])
