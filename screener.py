@@ -129,10 +129,20 @@ def filedownload(df):
     href = f'<a href="data:file/csv;base64,{b64}" download="Momentum Ranking.csv">Download CSV File</a>'
     return href   
 
-
-def stock_screener(check):
-    stocklist = pd.read_csv("./dataset/ind_niftymidcap150list.csv", header=0, index_col=0)
-    print(stocklist)
+def switch(index_ticker):
+    if index_ticker == "Nifty 750":
+        return "./dataset/ind_niftytotalmarket_list.csv"
+    elif index_ticker == "Nifty Midcap 150":
+        return "./dataset/ind_niftymidcap150list.csv"
+    elif index_ticker == "Nifty 50":
+        return "./dataset/ind_nifty50list.csv"
+    else
+        return "./dataset/ind_nifty50list.csv"
+    
+def stock_screener(index_ticker):
+    
+    stocklist = pd.read_csv(switch(index_ticker), header=0, index_col=0)
+   
 
 
 
@@ -509,11 +519,18 @@ def stock_screener(check):
     #writer = ExcelWriter("Ranking_ind_niftymidcap150list.xlsx")
     #exportList.to_excel(writer, "Sheet1")
     #writer.close()
+#Settings
+st.sidebar.header('Settings')
+index_ticker = st.sidebar.selectbox('Index', ['Nifty 750', 'Nifty Midcap 150', 'Nifty 50', ] )
+#min_volume = st.sidebar.text_input("Minimum Volume", 1e6)
+#min_price = st.sidebar.slider('Minimum Price ($)', 0,5000, 0)
+#days = st.sidebar.slider('Max Period (days)', 14, 730, 365)
+#min_rs_rating = st.sidebar.slider('Minimum Relative Strange Rating', 1, 100, 70)
 with st.container():
     st.title('Momentum Ranking')
     if st.button('Start screening'):
 
-        final_df = stock_screener(1)
+        final_df = stock_screener(index_ticker)
         print(final_df)
         st.dataframe(final_df)
         st.markdown(filedownload(final_df), unsafe_allow_html=True)
