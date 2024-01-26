@@ -133,7 +133,7 @@ def filedownload(df):
 
 def stock_screener():
     stocklist = pd.read_csv("./dataset/ind_niftymidcap150list.csv", header=0, index_col=0)
-
+    print(stocklist)
 
 
 
