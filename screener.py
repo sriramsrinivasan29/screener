@@ -12,7 +12,6 @@ import time
 import numpy as np
 from numpy import *
 
-from nsepy import get_history
 from pandas_datareader import data as pdr
 
 
