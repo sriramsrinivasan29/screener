@@ -521,9 +521,9 @@ def stock_screener():
 
     exportList = exportList.sort_values(by=["rs6M_rank"], ascending=True)
 
-
+    print(exportList)
     return exportList
-
+    
     #writer = ExcelWriter("Ranking_ind_niftymidcap150list.xlsx")
     #exportList.to_excel(writer, "Sheet1")
     #writer.close()
