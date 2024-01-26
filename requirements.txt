@@ -3,3 +3,4 @@ yahoo-fin==0.8.9
 yfinance==0.2.36
 TA-Lib==0.4.28
 matplotlib==3.8.2
+ta-lib-bin==0.4.26
