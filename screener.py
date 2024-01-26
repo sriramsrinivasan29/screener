@@ -146,7 +146,7 @@ def switch(index_ticker):
 def stock_screener(index_ticker):
     print(index_ticker)
     stocklist = pd.read_csv(switch(index_ticker), header=0, index_col=0)
-   
+    st.header(f'Ranking for  {index_ticker}')  
 
 
 
