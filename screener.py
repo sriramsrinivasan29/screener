@@ -532,6 +532,7 @@ with st.container():
     if st.button('Start screening'):
 
         final_df = stock_screener()
+        print(final_df)
         st.dataframe(final_df)
         st.markdown(filedownload(final_df), unsafe_allow_html=True)
         st.set_option('deprecation.showPyplotGlobalUse', False)
