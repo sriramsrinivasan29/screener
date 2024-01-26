@@ -136,8 +136,13 @@ def switch(index_ticker):
         return "./dataset/ind_niftymidcap150list.csv"
     elif index_ticker == "Nifty 50":
         return "./dataset/ind_nifty50list.csv"
-   
-    
+    elif index_ticker == "Nifty 200":
+        return "./dataset/ind_nifty200list.csv"
+    elif index_ticker == "Nifty 500":
+        return "./dataset/ind_nifty500list.csv"
+     elif index_ticker == "Nifty Smallcap 250":
+        return "./dataset/ind_niftysmallcap250list.csv"
+         
 def stock_screener(index_ticker):
     print(index_ticker)
     stocklist = pd.read_csv(switch(index_ticker), header=0, index_col=0)
