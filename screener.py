@@ -520,7 +520,7 @@ def stock_screener(index_ticker):
     #writer.close()
 #Settings
 st.sidebar.header('Settings')
-index_ticker = st.sidebar.selectbox('Index', ['Nifty 750', 'Nifty Midcap 150', 'Nifty 50', ] )
+index_ticker = st.sidebar.selectbox('Index', ('Nifty 750', 'Nifty Midcap 150', 'Nifty 50'))
 #min_volume = st.sidebar.text_input("Minimum Volume", 1e6)
 #min_price = st.sidebar.slider('Minimum Price ($)', 0,5000, 0)
 #days = st.sidebar.slider('Max Period (days)', 14, 730, 365)
