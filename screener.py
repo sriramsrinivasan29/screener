@@ -131,7 +131,7 @@ def filedownload(df):
     return href   
 
 
-def stock_screener():
+def stock_screener(check):
     stocklist = pd.read_csv("./dataset/ind_niftymidcap150list.csv", header=0, index_col=0)
     print(stocklist)
 
@@ -531,7 +531,7 @@ with st.container():
     st.title('Momentum Ranking')
     if st.button('Start screening'):
 
-        final_df = stock_screener()
+        final_df = stock_screener(1)
         print(final_df)
         st.dataframe(final_df)
         st.markdown(filedownload(final_df), unsafe_allow_html=True)
