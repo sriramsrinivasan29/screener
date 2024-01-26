@@ -150,7 +150,6 @@ def stock_screener(check):
             "Close",
             "1D",
             "ATH",
-            "ROE",
             "Score",
             "50 Day MA",
             "150 Day Ma",
@@ -386,10 +385,7 @@ def stock_screener(check):
                 else:
                     condition_11 = False
 
-                if float(ROE_TTM) > 0.0:
-                    condition_12 = True
-                else:
-                    condition_12 = False
+                
 
                 if float(technical_Rank) > 50.0:
                     condition_13 = True
@@ -408,7 +404,6 @@ def stock_screener(check):
                         "Close": currentClose,
                         "1D": price_change_1day,
                         "ATH": ATH,
-                        "ROE": ROE_TTM,
                         "Score": score,
                         "50 Day MA": moving_average_50,
                         "150 Day Ma": moving_average_150,
