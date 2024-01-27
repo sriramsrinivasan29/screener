@@ -545,13 +545,26 @@ end_date=st.sidebar.date_input('End date', value="today", min_value=dt.datetime(
 #min_price = st.sidebar.slider('Minimum Price ($)', 0,5000, 0)
 #days = st.sidebar.slider('Max Period (days)', 14, 730, 365)
 #min_rs_rating = st.sidebar.slider('Minimum Relative Strange Rating', 1, 100, 70)
+
+
+
+
+
+st.button('Rerun')
+
 with st.container():
     st.title('Momentum Ranking')
     if st.button('Start screening'):
-
-        final_df = stock_screener(index_ticker,end_date)
-        print(final_df)
-        st.dataframe(final_df.style.applymap(color_survived, subset=['1D']))
+        with st.status("Downloading data...", expanded=True) as status:
+            st.write("Searching for data...")        
+            
+           
+            
+            
+            final_df = stock_screener(index_ticker,end_date)
+            status.update(label="Download complete!", state="complete", expanded=False)
+            print(final_df)
+            st.dataframe(final_df.style.applymap(color_survived, subset=['1D']))
 
         st.markdown(filedownload(final_df), unsafe_allow_html=True)
         st.set_option('deprecation.showPyplotGlobalUse', False)
