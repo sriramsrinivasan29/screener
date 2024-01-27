@@ -162,7 +162,7 @@ def switch(index_ticker):
     elif index_ticker == "Nifty Smallcap250 Momentum Quality 100":
         return "./dataset/ind_niftySmallcap250MomentumQuality100_list.csv"
     elif index_ticker=='OMX Stockholm Large Cap':
-        return "./dataset/OMXStockholmLargeCap.csv"
+        return "./dataset/OMX_Stockholm_Large_Cap.csv"
         
 def stock_screener(index_ticker,end_date,indiaFlag):
     print(index_ticker)
