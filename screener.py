@@ -534,8 +534,8 @@ def stock_screener(index_ticker,start_date,end_date):
 #Settings
 st.sidebar.header('Settings')
 index_ticker = st.sidebar.selectbox('Index', ('Nifty 750', 'Nifty Midcap 150', 'Nifty 50','Nifty 500','Nifty 200','Nifty Smallcap 250'))
-start_date=st.date_input('Start date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None, *, format="YYYY-MM-DD", disabled=False, label_visibility="visible")
-end_date=st.date_input('End date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None, *, format="YYYY-MM-DD", disabled=False, label_visibility="visible")
+start_date=st.date_input('Start date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None, format="YYYY-MM-DD", disabled=False, label_visibility="visible")
+end_date=st.date_input('End date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None,  format="YYYY-MM-DD", disabled=False, label_visibility="visible")
 #min_volume = st.sidebar.text_input("Minimum Volume", 1e6)
 #min_price = st.sidebar.slider('Minimum Price ($)', 0,5000, 0)
 #days = st.sidebar.slider('Max Period (days)', 14, 730, 365)
