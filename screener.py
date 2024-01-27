@@ -166,9 +166,9 @@ def stock_screener(index_ticker,end_date):
     stocklist = pd.read_csv(switch(index_ticker), header=0, index_col=0)
     st.header(f'Ranking for  {index_ticker}')  
     latest_iteration = st.empty()
-	having_break = st.empty()
-	bar = st.progress(0)
-	total = len(stocklist)
+    having_break = st.empty()
+    bar = st.progress(0)
+    total = len(stocklist)
 
 
     stocklist = stocklist["Symbol"] + ".NS"
