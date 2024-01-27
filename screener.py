@@ -165,7 +165,10 @@ def stock_screener(index_ticker,end_date):
     print(index_ticker)
     stocklist = pd.read_csv(switch(index_ticker), header=0, index_col=0)
     st.header(f'Ranking for  {index_ticker}')  
-
+    latest_iteration = st.empty()
+	having_break = st.empty()
+	bar = st.progress(0)
+	total = len(stocklist)
 
 
     stocklist = stocklist["Symbol"] + ".NS"
@@ -477,7 +480,9 @@ def stock_screener(index_ticker,end_date):
 
             else:
                 print(ticker.split(".")[0] + " has no data")
-
+            
+    		latest_iteration.text(f'Stocks Processed: {(n+1)}/{total}')
+    		bar.progress((n+1)/total)
     except Exception as e:
         print(e)
     exportList["rs_rank"] = exportList["RS_Rating"].rank(ascending=False)
@@ -544,7 +549,7 @@ def stock_screener(index_ticker,end_date):
 #Settings
 st.sidebar.header('Settings')
 index_ticker = st.sidebar.selectbox('Index', ('Nifty 750', 'Nifty Midcap 150', 'Nifty 50','Nifty 100','Nifty 500','Nifty 200','Nifty Smallcap 250','Nifty Microcap 250','Nifty Midcap150 Momentum 50','Nifty Smallcap250 Momentum Quality 100'))
-#start_date=st.sidebar.date_input('Start date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None, format="YYYY-MM-DD", disabled=False, label_visibility="visible")
+
 end_date=st.sidebar.date_input('End date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None,  format="YYYY-MM-DD", disabled=False, label_visibility="visible")
 #min_volume = st.sidebar.text_input("Minimum Volume", 1e6)
 #min_price = st.sidebar.slider('Minimum Price ($)', 0,5000, 0)
