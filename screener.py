@@ -18,7 +18,15 @@ from pandas_datareader import data as pdr
 
 start = dt.datetime(2017, 12, 1)
 now = dt.datetime.now()
-end_date = "2024-01-25"
+#end_date = "2024-01-25"
+
+def period(days=365):
+  '''
+  return start and end dates
+  '''
+  start_date = dt.datetime(2017, 12, 1)
+  end_date = datetime.date.today()
+  return start_date, end_date 
 
 
 def Technical_Rank(clsval):
@@ -143,7 +151,7 @@ def switch(index_ticker):
     elif index_ticker == "Nifty Smallcap 250":
         return "./dataset/ind_niftysmallcap250list.csv"
          
-def stock_screener(index_ticker):
+def stock_screener(index_ticker,start_date,end_date):
     print(index_ticker)
     stocklist = pd.read_csv(switch(index_ticker), header=0, index_col=0)
     st.header(f'Ranking for  {index_ticker}')  
@@ -526,6 +534,8 @@ def stock_screener(index_ticker):
 #Settings
 st.sidebar.header('Settings')
 index_ticker = st.sidebar.selectbox('Index', ('Nifty 750', 'Nifty Midcap 150', 'Nifty 50','Nifty 500','Nifty 200','Nifty Smallcap 250'))
+start_date=st.date_input('Start date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None, *, format="YYYY-MM-DD", disabled=False, label_visibility="visible")
+end_date=st.date_input('End date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None, *, format="YYYY-MM-DD", disabled=False, label_visibility="visible")
 #min_volume = st.sidebar.text_input("Minimum Volume", 1e6)
 #min_price = st.sidebar.slider('Minimum Price ($)', 0,5000, 0)
 #days = st.sidebar.slider('Max Period (days)', 14, 730, 365)
@@ -534,7 +544,7 @@ with st.container():
     st.title('Momentum Ranking')
     if st.button('Start screening'):
 
-        final_df = stock_screener(index_ticker)
+        final_df = stock_screener(index_ticker,start_date,end_date)
         print(final_df)
         st.dataframe(final_df)
         st.markdown(filedownload(final_df), unsafe_allow_html=True)
