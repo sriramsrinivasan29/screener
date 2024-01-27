@@ -479,9 +479,9 @@ def stock_screener(index_ticker,end_date):
 
 
             else:
-                print(ticker.split(".")[0] + " has no data")            
-    	    latest_iteration.text(f'Stocks Processed: {(n+1)}/{total}')
-    	    bar.progress((n+1)/total)
+                print(ticker.split(".")[0] + " has no data")
+            latest_iteration.text(f'Stocks Processed: {(n+1)}/{total}')
+            bar.progress((n+1)/total)
     except Exception as e:
         print(e)
     exportList["rs_rank"] = exportList["RS_Rating"].rank(ascending=False)
