@@ -19,7 +19,9 @@ from pandas_datareader import data as pdr
 start = dt.datetime(2017, 12, 1)
 now = dt.datetime.now()
 #end_date = "2024-01-25"
-
+def color_survived(val):
+    color = 'green' if val>0 else 'red'
+    return f'background-color: {color}'
 def period(days=365):
   '''
   return start and end dates
@@ -550,5 +552,7 @@ with st.container():
         final_df = stock_screener(index_ticker,end_date)
         print(final_df)
         st.dataframe(final_df)
+        st.dataframe(df.style.applymap(color_survived, subset=['1D']))
+
         st.markdown(filedownload(final_df), unsafe_allow_html=True)
         st.set_option('deprecation.showPyplotGlobalUse', False)
