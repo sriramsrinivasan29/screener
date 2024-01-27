@@ -164,7 +164,7 @@ def switch(index_ticker):
 def stock_screener(index_ticker,end_date):
     print(index_ticker)
     stocklist = pd.read_csv(switch(index_ticker), header=0, index_col=0)
-    st.header(f'Ranking for  {index_ticker}')  
+    st.header(f'Ranking for  {index_ticker} on {end_date}')  
     latest_iteration = st.empty()
     filter_stock = st.empty()
     bar = st.progress(0)
