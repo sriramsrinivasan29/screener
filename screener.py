@@ -156,6 +156,9 @@ def switch(index_ticker):
         return "./dataset/ind_niftymicrocap250_list.csv"
     elif index_ticker == "Nifty 100":
         return "./dataset/ind_nifty100list.csv"
+    elif index_ticker == "Nifty Midcap150 Momentum 50":
+        return "./dataset/ind_niftymidcap150momentum50_list.csv"
+        
 def stock_screener(index_ticker,end_date):
     print(index_ticker)
     stocklist = pd.read_csv(switch(index_ticker), header=0, index_col=0)
@@ -538,7 +541,7 @@ def stock_screener(index_ticker,end_date):
     #writer.close()
 #Settings
 st.sidebar.header('Settings')
-index_ticker = st.sidebar.selectbox('Index', ('Nifty 750', 'Nifty Midcap 150', 'Nifty 50','Nifty 100','Nifty 500','Nifty 200','Nifty Smallcap 250','Nifty Microcap 250'))
+index_ticker = st.sidebar.selectbox('Index', ('Nifty 750', 'Nifty Midcap 150', 'Nifty 50','Nifty 100','Nifty 500','Nifty 200','Nifty Smallcap 250','Nifty Microcap 250','Nifty Midcap150 Momentum 50'))
 #start_date=st.sidebar.date_input('Start date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None, format="YYYY-MM-DD", disabled=False, label_visibility="visible")
 end_date=st.sidebar.date_input('End date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None,  format="YYYY-MM-DD", disabled=False, label_visibility="visible")
 #min_volume = st.sidebar.text_input("Minimum Volume", 1e6)
