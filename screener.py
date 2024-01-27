@@ -166,7 +166,7 @@ def stock_screener(index_ticker,end_date):
     stocklist = pd.read_csv(switch(index_ticker), header=0, index_col=0)
     st.header(f'Ranking for  {index_ticker}')  
     latest_iteration = st.empty()
-    having_break = st.empty()
+    filter_stock = st.empty()
     bar = st.progress(0)
     total = len(stocklist)
 
@@ -476,6 +476,7 @@ def stock_screener(index_ticker,end_date):
                         [exportList, pd.DataFrame([new_row])], ignore_index=True
                     )
                     print(ticker.split(".")[0] + " made the requirements")
+                    filter_stock.text(f'Stock passed: {ticker.split(".")[0]}')
 
 
             else:
@@ -538,7 +539,7 @@ def stock_screener(index_ticker,end_date):
 
 
     exportList = exportList.sort_values(by=["rs6M_rank"], ascending=True)
-
+    filter_stock.text('')
     print(exportList)
     return exportList
     
