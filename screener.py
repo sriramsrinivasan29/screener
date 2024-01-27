@@ -551,7 +551,6 @@ with st.container():
 
         final_df = stock_screener(index_ticker,end_date)
         print(final_df)
-        st.dataframe(final_df)
         st.dataframe(final_df.style.applymap(color_survived, subset=['1D']))
 
         st.markdown(filedownload(final_df), unsafe_allow_html=True)
