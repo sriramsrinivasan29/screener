@@ -18,6 +18,7 @@ from pandas_datareader import data as pdr
 
 start = dt.datetime(2017, 12, 1)
 now = dt.datetime.now()
+indiaFlag=True
 #end_date = "2024-01-25"
 def color_survived(val):
     color = 'green' if val>0 else 'red'
@@ -160,8 +161,10 @@ def switch(index_ticker):
         return "./dataset/ind_niftymidcap150momentum50_list.csv"
     elif index_ticker == "Nifty Smallcap250 Momentum Quality 100":
         return "./dataset/ind_niftySmallcap250MomentumQuality100_list.csv"
+    elif index_ticker=='OMX Stockholm Large Cap'
+        return "./dataset/OMXStockholmLargeCap.csv"
         
-def stock_screener(index_ticker,end_date):
+def stock_screener(index_ticker,end_date,indiaFlag):
     print(index_ticker)
     stocklist = pd.read_csv(switch(index_ticker), header=0, index_col=0)
     st.header(f'Ranking for  {index_ticker} on {end_date}')  
@@ -170,11 +173,17 @@ def stock_screener(index_ticker,end_date):
     bar = st.progress(0)
     total = len(stocklist)
 
+    
+    if indiaFlag :
+        nifty = yf.download("^NSEI", "2010-1-1", end_date)
+        stocklist = stocklist["Symbol"] + ".NS"
+    else:
+        nifty = yf.download("^OMXS30", "2010-1-1", end_date)
+        stocklist = stocklist["Symbol"] 
 
-    stocklist = stocklist["Symbol"] + ".NS"
-
-
-    nifty = yf.download("^NSEI", "2010-1-1", end_date)
+    
+    
+    
     Std_Nifty_252 = nifty["Adj Close"].rolling(window=20).std()[-1]
     n = -1
     final = []
@@ -548,7 +557,7 @@ def stock_screener(index_ticker,end_date):
     #writer.close()
 #Settings
 st.sidebar.header('Settings')
-index_ticker = st.sidebar.selectbox('Index', ('Nifty 750', 'Nifty Midcap 150', 'Nifty 50','Nifty 100','Nifty 500','Nifty 200','Nifty Smallcap 250','Nifty Microcap 250','Nifty Midcap150 Momentum 50','Nifty Smallcap250 Momentum Quality 100'))
+index_ticker = st.sidebar.selectbox('Index', ('Nifty 750', 'Nifty Midcap 150', 'Nifty 50','Nifty 100','Nifty 500','Nifty 200','Nifty Smallcap 250','Nifty Microcap 250','Nifty Midcap150 Momentum 50','Nifty Smallcap250 Momentum Quality 100','OMX Stockholm Large Cap'))
 
 end_date=st.sidebar.date_input('End date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None,  format="YYYY-MM-DD", disabled=False, label_visibility="visible")
 #min_volume = st.sidebar.text_input("Minimum Volume", 1e6)
@@ -568,8 +577,9 @@ with st.container():
             
            
             
-            
-        final_df = stock_screener(index_ticker,end_date)
+        if index_ticker == "OMX Stockholm Large Cap":    
+            indiaFlag=False
+        final_df = stock_screener(index_ticker,end_date,indiaFlag)
             
         st.dataframe(final_df.style.applymap(color_survived, subset=['1D']))
 
