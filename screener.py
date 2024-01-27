@@ -550,21 +550,18 @@ end_date=st.sidebar.date_input('End date', value="today", min_value=dt.datetime(
 
 
 
-st.button('Rerun')
 
 with st.container():
     st.title('Momentum Ranking')
     if st.button('Start screening'):
-        with st.status("Downloading data...", expanded=True) as status:
-            st.write("Searching for data...")        
+       
             
            
             
             
-            final_df = stock_screener(index_ticker,end_date)
-            status.update(label="Download complete!", state="complete", expanded=False)
-            print(final_df)
-            st.dataframe(final_df.style.applymap(color_survived, subset=['1D']))
+        final_df = stock_screener(index_ticker,end_date)
+            
+        st.dataframe(final_df.style.applymap(color_survived, subset=['1D']))
 
         st.markdown(filedownload(final_df), unsafe_allow_html=True)
         st.set_option('deprecation.showPyplotGlobalUse', False)
