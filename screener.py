@@ -441,9 +441,7 @@ def stock_screener(index_ticker,end_date,indiaFlag):
                 if efficiency_ratio1 > 1:
                     condition_11 = True
                 else:
-                    condition_11 = False
-
-                
+                    condition_11 = False                
 
                 if float(technical_Rank) > 50.0:
                     condition_13 = True
@@ -454,20 +452,9 @@ def stock_screener(index_ticker,end_date,indiaFlag):
                     condition_14 = True
                 else:
                     condition_14 = False
-                    
-                def all_conditions(self):
-                    if all(
-                        [self.condition_1,
-                          self.condition_2,
-                          self.condition_3,
-                          self.condition_4,
-                          self.condition_5,
-                          self.condition_6,
-                          self.condition_7,                          
-                          self.condition_8]):
-                    	return True
+              
                               
-                if all_conditions():
+                if(condition_1 and condition_2 and condition_3 and condition_4 and condition_5 and condition_6 and condition_7 and condition_8 and  condition_10 and condition_1) :
                     # if(condition_1 and condition_2 and condition_3 and condition_4 and condition_5 and condition_6 and condition_7 and condition_8 and condition_9 and condition_10 and condition_11):
                     new_row = {
                         "Stock": ticker.split(".")[0],
