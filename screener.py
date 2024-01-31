@@ -169,6 +169,11 @@ def switch(index_ticker):
         return "./dataset/OMXSMCPI.csv"
     elif index_ticker=='OMX Stockholm Small Cap':
         return "./dataset/OMXSSCPI.csv"
+    elif index_ticker=='OMX Stockholm All Share Cap':
+        return "./dataset/OMXSCAPPI.csv"
+
+
+
 
 
 
@@ -571,7 +576,7 @@ def stock_screener(index_ticker,end_date,indiaFlag):
     #writer.close()
 #Settings
 st.sidebar.header('Settings')
-index_ticker = st.sidebar.selectbox('Index', ('Nifty 750', 'Nifty Midcap 150', 'Nifty 50','Nifty 100','Nifty 500','Nifty 200','Nifty Smallcap 250','Nifty Microcap 250','Nifty Midcap150 Momentum 50','Nifty Smallcap250 Momentum Quality 100','OMXS30','OMX Stockholm Large Cap','OMX Stockholm Mid Cap','OMX Stockholm Small Cap'))  #'OMX Stockholm Large Cap'
+index_ticker = st.sidebar.selectbox('Index', ('Nifty 750', 'Nifty Midcap 150', 'Nifty 50','Nifty 100','Nifty 500','Nifty 200','Nifty Smallcap 250','Nifty Microcap 250','Nifty Midcap150 Momentum 50','Nifty Smallcap250 Momentum Quality 100','OMXS30','OMX Stockholm Large Cap','OMX Stockholm Mid Cap','OMX Stockholm Small Cap','OMX Stockholm All Share Cap'))  #'OMX Stockholm Large Cap'
 
 end_date=st.sidebar.date_input('End date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None,  format="YYYY-MM-DD", disabled=False, label_visibility="visible")
 #min_volume = st.sidebar.text_input("Minimum Volume", 1e6)
