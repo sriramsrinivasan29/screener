@@ -160,9 +160,7 @@ def switch(index_ticker):
     elif index_ticker == "Nifty Midcap150 Momentum 50":
         return "./dataset/ind_niftymidcap150momentum50_list.csv"
     elif index_ticker == "Nifty Smallcap250 Momentum Quality 100":
-        return "./dataset/ind_niftySmallcap250MomentumQuality100_list.csv"
-    elif index_ticker=='OMX Stockholm Large Cap':
-        return "./dataset/OMX_Stockholm_Large_Cap.csv"
+        return "./dataset/ind_niftySmallcap250MomentumQuality100_list.csv"   
     elif index_ticker=='OMXS30':
         return "./dataset/OMXS30.csv"
     elif index_ticker=='OMX Stockholm Large Cap':
