@@ -452,7 +452,7 @@ def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
                     condition_14 = True
                 else:
                     condition_14 = False
-                if minerveni_flag :
+                if minerveni_flag =="Yes" :
                     filter= condition_1 and condition_2 and condition_3 and condition_4 and condition_5 and condition_6 and condition_7 and condition_8 and  condition_10 and condition_1
                 else :
                     filter=condition_10
