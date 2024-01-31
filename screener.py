@@ -176,7 +176,7 @@ def switch(index_ticker):
     elif index_ticker=='OMX Stockholm 60':
         return "./dataset/OMXS60PI.csv"
         
-def stock_screener(index_ticker,end_date,indiaFlag):
+def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
     print(index_ticker)
     stocklist = pd.read_csv(switch(index_ticker), header=0, index_col=0)
     st.header(f'Ranking for  {index_ticker} on {end_date}')  
@@ -452,9 +452,12 @@ def stock_screener(index_ticker,end_date,indiaFlag):
                     condition_14 = True
                 else:
                     condition_14 = False
-              
+                if minerveni_flag :
+                    filter= condition_1 and condition_2 and condition_3 and condition_4 and condition_5 and condition_6 and condition_7 and condition_8 and  condition_10 and condition_1
+                else :
+                    filter=condition_10
                               
-                if(condition_1 and condition_2 and condition_3 and condition_4 and condition_5 and condition_6 and condition_7 and condition_8 and  condition_10 and condition_1) :
+                if(filter) :
                     # if(condition_1 and condition_2 and condition_3 and condition_4 and condition_5 and condition_6 and condition_7 and condition_8 and condition_9 and condition_10 and condition_11):
                     new_row = {
                         "Stock": ticker.split(".")[0],
@@ -571,6 +574,8 @@ def stock_screener(index_ticker,end_date,indiaFlag):
 #Settings
 st.sidebar.header('Settings')
 index_ticker = st.sidebar.selectbox('Index', ('Nifty 750', 'Nifty Midcap 150', 'Nifty 50','Nifty 100','Nifty 500','Nifty 200','Nifty Smallcap 250','Nifty Microcap 250','Nifty Midcap150 Momentum 50','Nifty Smallcap250 Momentum Quality 100','OMXS30','OMX Stockholm Large Cap','OMX Stockholm Mid Cap','OMX Stockholm Small Cap','OMX Stockholm All Share Cap','OMX Stockholm 60'))  #'OMX Stockholm Large Cap'
+minerveni_flag = st.sidebar.selectbox('Mark Minervini Filter', ('Yes','No'))  
+
 
 end_date=st.sidebar.date_input('End date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None,  format="YYYY-MM-DD", disabled=False, label_visibility="visible")
 #min_volume = st.sidebar.text_input("Minimum Volume", 1e6)
@@ -592,7 +597,7 @@ with st.container():
             
         if  index_ticker.__contains__('OMX'):    
             indiaFlag=False
-        final_df = stock_screener(index_ticker,end_date,indiaFlag)
+        final_df = stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag)
             
         st.dataframe(final_df.style.applymap(color_survived, subset=['1D']))
 
