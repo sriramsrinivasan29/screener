@@ -175,18 +175,6 @@ def switch(index_ticker):
         return "./dataset/OMXSCAPPI.csv"
     elif index_ticker=='OMX Stockholm 60':
         return "./dataset/OMXS60PI.csv"
-
-
-
-
-
-
-
-
-
-
-
-
         
 def stock_screener(index_ticker,end_date,indiaFlag):
     print(index_ticker)
@@ -470,13 +458,13 @@ def stock_screener(index_ticker,end_date,indiaFlag):
                 def all_conditions(self):
                     if all(
                         [self.condition_1,
-                          self.condition_2(),
-                          self.condition_3(),
-                          self.condition_4(),
-                          self.condition_5(),
-                          self.condition_6(),
-                          self.condition_7(),                          
-                          self.condition_8()]):
+                          self.condition_2,
+                          self.condition_3,
+                          self.condition_4,
+                          self.condition_5,
+                          self.condition_6,
+                          self.condition_7,                          
+                          self.condition_8]):
                     	return True
                               
                 if all_conditions():
