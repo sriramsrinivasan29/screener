@@ -507,6 +507,7 @@ def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
             else:
                 print(ticker.split(".")[0] + " has no data")
             latest_iteration.text(f'Stocks Processed: {(n+1)}/{total}')
+            
             bar.progress((n+1)/total)
     except Exception as e:
         print(e)
@@ -564,7 +565,8 @@ def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
 
 
     exportList = exportList.sort_values(by=["rs6M_rank"], ascending=True)
-    filter_stock.text('')
+    filter_stock.text(f'Total Stock(s) passed: { len(exportList.index)}')
+    
     print(exportList)
     return exportList
     
