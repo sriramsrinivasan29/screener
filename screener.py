@@ -582,17 +582,17 @@ with st.sidebar.form(key ='Form1'):
     end_date=st.sidebar.date_input('End date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None,  format="YYYY-MM-DD", disabled=False, label_visibility="visible")
     submitted1 = st.form_submit_button(label = 'Search Twitter 🔎')
 
-with st.container():
-    st.title('Momentum Ranking')
-    if st.button('Start screening'):    
-            
-           
-            
-        if  index_ticker.__contains__('OMX'):    
-            indiaFlag=False
-        final_df = stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag)
-            
-        st.dataframe(final_df.style.applymap(color_survived, subset=['1D']))
-
-        st.markdown(filedownload(final_df), unsafe_allow_html=True)
-        st.set_option('deprecation.showPyplotGlobalUse', False)
+    with st.container():
+        st.title('Momentum Ranking')
+        if submitted1:    
+                
+               
+                
+            if  index_ticker.__contains__('OMX'):    
+                indiaFlag=False
+            final_df = stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag)
+                
+            st.dataframe(final_df.style.applymap(color_survived, subset=['1D']))
+    
+            st.markdown(filedownload(final_df), unsafe_allow_html=True)
+            st.set_option('deprecation.showPyplotGlobalUse', False)
