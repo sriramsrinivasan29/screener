@@ -589,7 +589,7 @@ with st.sidebar.form(key ='Form1'):
                 indiaFlag=False
             
             final_df = stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag)
-    with st.container():
+with st.container():
                 st.title('Momentum Ranking')
                 st.dataframe(final_df.style.applymap(color_survived, subset=['1D']))        
                 st.markdown(filedownload(final_df), unsafe_allow_html=True)
