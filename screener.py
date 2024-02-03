@@ -574,26 +574,17 @@ def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
     #exportList.to_excel(writer, "Sheet1")
     #writer.close()
 #Settings
-st.sidebar.header('Settings')
-index_ticker = st.sidebar.selectbox('Index', ('Nifty 750', 'Nifty Midcap 150', 'Nifty 50','Nifty 100','Nifty 500','Nifty 200','Nifty Smallcap 250','Nifty Microcap 250','Nifty Midcap150 Momentum 50','Nifty Smallcap250 Momentum Quality 100','OMXS30','OMX Stockholm Large Cap','OMX Stockholm Mid Cap','OMX Stockholm Small Cap','OMX Stockholm All Share Cap','OMX Stockholm 60'))  #'OMX Stockholm Large Cap'
-minerveni_flag = st.sidebar.selectbox('Mark Minervini Filter', ('Yes','No'))  
+with st.sidebar.form(key ='Form1'):
 
-
-end_date=st.sidebar.date_input('End date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None,  format="YYYY-MM-DD", disabled=False, label_visibility="visible")
-#min_volume = st.sidebar.text_input("Minimum Volume", 1e6)
-#min_price = st.sidebar.slider('Minimum Price ($)', 0,5000, 0)
-#days = st.sidebar.slider('Max Period (days)', 14, 730, 365)
-#min_rs_rating = st.sidebar.slider('Minimum Relative Strange Rating', 1, 100, 70)
-
-
-
-
-
+    st.sidebar.header('Settings')
+    index_ticker = st.sidebar.selectbox('Index', ('Nifty 750', 'Nifty Midcap 150', 'Nifty 50','Nifty 100','Nifty 500','Nifty 200','Nifty Smallcap 250','Nifty Microcap 250','Nifty Midcap150 Momentum 50','Nifty Smallcap250 Momentum Quality 100','OMXS30','OMX Stockholm Large Cap','OMX Stockholm Mid Cap','OMX Stockholm Small Cap','OMX Stockholm All Share Cap','OMX Stockholm 60'))  #'OMX Stockholm Large Cap'
+    minerveni_flag = st.sidebar.selectbox('Mark Minervini Filter', ('Yes','No'))
+    end_date=st.sidebar.date_input('End date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None,  format="YYYY-MM-DD", disabled=False, label_visibility="visible")
+    submitted1 = st.form_submit_button(label = 'Search Twitter 🔎')
 
 with st.container():
     st.title('Momentum Ranking')
-    if st.button('Start screening'):
-       
+    if st.button('Start screening'):    
             
            
             
