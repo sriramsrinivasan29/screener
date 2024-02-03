@@ -582,7 +582,7 @@ with st.sidebar.form(key ='Form1'):
     end_date=st.sidebar.date_input('End date', value="today", min_value=dt.datetime(2017, 12, 1), max_value=datetime.date.today(), key=None, help=None, on_change=None, args=None, kwargs=None,  format="YYYY-MM-DD", disabled=False, label_visibility="visible")
     submitted1 = st.form_submit_button(label = 'Search Twitter 🔎')
 
-    with st.container():
+with st.container():
         st.title('Momentum Ranking')
         if submitted1:    
                 
