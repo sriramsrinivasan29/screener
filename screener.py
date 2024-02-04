@@ -179,6 +179,7 @@ def switch(index_ticker):
 def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
     print(index_ticker)
     stocklist = pd.read_csv(switch(index_ticker), header=0, index_col=0)
+    fullList=stocklist
     st.header(f'Ranking for  {index_ticker} on {end_date}')  
     latest_iteration = st.empty()
     filter_stock = st.empty()
@@ -205,6 +206,7 @@ def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
     exportList = pd.DataFrame(
         columns=[
             "Stock",
+            "Company Name",
             "Close",
             "1D",
             "ATH",
@@ -251,7 +253,9 @@ def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
             print("\npulling {} with index {}".format(ticker.split(".")[0], n))
             stock_industry = ""
             stock = yf.download(ticker, "2017-5-2", end_date)
-
+            stockDetails = yf.Ticker(ticker)
+            # get all stock info
+            stockName=stockDetails.info['longName']
             if stock.size > 2000:
 
                 moving_average_4 = ta.SMA(stock["Adj Close"], timeperiod=4)[-1]
@@ -461,6 +465,7 @@ def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
                     # if(condition_1 and condition_2 and condition_3 and condition_4 and condition_5 and condition_6 and condition_7 and condition_8 and condition_9 and condition_10 and condition_11):
                     new_row = {
                         "Stock": ticker.split(".")[0],
+                        "Company Name":stockName,
                         "Close": currentClose,
                         "1D": price_change_1day,
                         "ATH": ATH,
