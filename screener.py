@@ -14,7 +14,13 @@ from numpy import *
 
 from pandas_datareader import data as pdr
 
-
+# Add custom CSS to hide the GitHub icon
+hide_github_icon = """
+#GithubIcon {
+  visibility: hidden;
+}
+"""
+st.markdown(hide_github_icon, unsafe_allow_html=True)
 
 start = dt.datetime(2017, 12, 1)
 now = dt.datetime.now()
