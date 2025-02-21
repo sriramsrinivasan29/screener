@@ -186,7 +186,7 @@ def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
     bar = st.progress(0)
     total = len(stocklist)
 
-    
+    '''
     if indiaFlag :
         nifty = yf.download("^NSEI", "2010-1-1", end_date)
         stocklist = stocklist["Symbol"] + ".NS"
@@ -196,7 +196,7 @@ def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
         nifty = yf.download("^OMXS30", "2010-1-1", end_date)
         stocklist = stocklist["Symbol"]+ ".ST"
         #Std_Nifty_252 = 1
-
+    '''
     
     
     
@@ -294,7 +294,8 @@ def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
                 Std_20 = stock["Adj Close"].rolling(window=20).std()[-1]
                 Std_stock_252 = stock["Adj Close"].rolling(window=252).std()[-1]
                 HTP = high_of_52week / close_252
-                BetaEqualized = Std_stock_252 / Std_Nifty_252
+                #BetaEqualized = Std_stock_252 / Std_Nifty_252
+                BetaEqualized=1
                 Coffecient_Variation = (Std_stock_252 / moving_average_200) * 100
                 price_change_1day = (stock["Adj Close"].pct_change(periods=1)[-1]) * 100
 
