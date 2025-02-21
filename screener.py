@@ -250,7 +250,7 @@ def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
         for ticker in stocklist:
 
             n += 1
-            time.sleep(0.01)
+            time.sleep(0.10)
             print("\npulling {} with index {}".format(ticker.split(".")[0], n))
             stock_industry = ""
             stock = yf.download(ticker, "2017-5-2", end_date)
