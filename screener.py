@@ -190,11 +190,12 @@ def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
     if indiaFlag :
         nifty = yf.download("^NSEI", "2010-1-1", end_date)
         stocklist = stocklist["Symbol"] + ".NS"
-        Std_Nifty_252 = nifty["Adj Close"].rolling(window=20).std()[-1]
+        #Std_Nifty_252 = nifty["Adj Close"].rolling(window=20).std()[-1]
+        Std_Nifty_252=1
     else:
         nifty = yf.download("^OMXS30", "2010-1-1", end_date)
         stocklist = stocklist["Symbol"]+ ".ST"
-        Std_Nifty_252 = 1
+        #Std_Nifty_252 = 1
 
     
     
