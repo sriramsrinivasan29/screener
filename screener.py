@@ -610,4 +610,4 @@ with st.container():
         st.dataframe(final_df.style.applymap(color_survived, subset=['1D']))
 
         st.markdown(filedownload(final_df), unsafe_allow_html=True)
-        st.set_option('deprecation.showPyplotGlobalUse', False)
+        #st.set_option('deprecation.showPyplotGlobalUse', False)
