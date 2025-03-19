@@ -185,8 +185,7 @@ def switch(index_ticker):
 def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
     print(index_ticker)
     stocklist = pd.read_csv(switch(index_ticker), header=0, index_col=0)
-    fullList=stocklist
-    print(stocklist)
+    fullList=stocklist   
     st.header(f'Ranking for  {index_ticker} on {end_date}')  
     latest_iteration = st.empty()
     filter_stock = st.empty()
@@ -258,7 +257,8 @@ def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
 
             n += 1
             time.sleep(0.10)
-            print("\npulling {} with index {}".format(ticker.split(".")[1], n))
+            print(ticker)
+            print("\npulling {} with index {}".format(ticker.split(".")[0], n))
             stock_industry = ""
             
             stock = yf.download(ticker, "2017-5-2", end_date)
