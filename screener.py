@@ -13,7 +13,7 @@ import numpy as np
 from numpy import *
 
 from pandas_datareader import data as pdr
-from requests_ratelimiter import LimiterSession, RequestRate, Limiter, Duration
+#from requests_ratelimiter import LimiterSession, RequestRate, Limiter, Duration
 
 #history_rate = RequestRate(1, Duration.SECOND)
 #limiter = Limiter(history_rate)
