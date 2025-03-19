@@ -261,8 +261,8 @@ def stock_screener(index_ticker,end_date,indiaFlag,minerveni_flag):
             print("\npulling {} with index {}".format(ticker.split(".")[0], n))
             stock_industry = ""
             
-            stock = yf.download("ADANIENT", "2017-5-2", end_date)
-            stockDetails = yf.Ticker("ADANIENT")
+            stock = yf.download(ticker, "2017-5-2", end_date)
+            stockDetails = yf.Ticker(ticker)
             # get all stock info
             stockName=stockDetails.info['longName']
             if stock.size > 2000:
