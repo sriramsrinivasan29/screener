@@ -10,6 +10,27 @@ from nsepython import equity_history  # from nsepythonserver
 from nsetools import Nse
 from requests_ratelimiter import LimiterSession, RequestRate, Limiter, Duration
 
+
+
+# resilient import for NSE data
+equity_history = None
+try:
+    from nsepython import equity_history  # provided by nsepythonserver
+    nse_module_used = "nsepython"
+except ImportError:
+    try:
+        # fallback attempt if the alternate package exposes differently
+        from nsepythonserver import equity_history
+        nse_module_used = "nsepythonserver"
+    except ImportError:
+        equity_history = None
+        nse_module_used = None
+
+if equity_history is None:
+    st.error("NSE data library not found. Ensure `nsepythonserver` (or `nsepython`) is in requirements.txt and redeploy.")
+
+
+
 # Rate limiter (optional for yfinance fallback)
 history_rate = RequestRate(1, Duration.SECOND)
 limiter = Limiter(history_rate)
@@ -166,6 +187,8 @@ def color_survived(val):
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_nse_history(ticker: str, start_date: dt.datetime, end_date: dt.datetime) -> pd.DataFrame:
+    if equity_history is None:
+        raise RuntimeError("Cannot fetch NSE history because equity_history is unavailable.")
     symbol = ticker.split(".")[0].upper()
     sd_str = start_date.strftime("%d-%m-%Y")
     ed_str = end_date.strftime("%d-%m-%Y")
