@@ -1,5 +1,5 @@
 streamlit>=1.25,<2
-nsepythonserver  # or replace with nsepython
+nsepythonserver
 nsetools
 yfinance
 requests-ratelimiter
