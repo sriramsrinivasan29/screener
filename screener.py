@@ -6,32 +6,24 @@ import time
 import numpy as np
 from numpy import isnan
 import yfinance as yf
-from nsepython import equity_history  # from nsepythonserver
-from nsetools import Nse
-from requests_ratelimiter import LimiterSession, RequestRate, Limiter, Duration
 
-
-
-# resilient import for NSE data
+# resilient NSE import
 equity_history = None
 try:
     from nsepython import equity_history  # provided by nsepythonserver
     nse_module_used = "nsepython"
 except ImportError:
     try:
-        # fallback attempt if the alternate package exposes differently
         from nsepythonserver import equity_history
         nse_module_used = "nsepythonserver"
     except ImportError:
         equity_history = None
         nse_module_used = None
 
-if equity_history is None:
-    st.error("NSE data library not found. Ensure `nsepythonserver` (or `nsepython`) is in requirements.txt and redeploy.")
+from nsetools import Nse
+from requests_ratelimiter import LimiterSession, RequestRate, Limiter, Duration
 
-
-
-# Rate limiter (optional for yfinance fallback)
+# Rate limiter stub (used earlier for yfinance-ish patterns, optional)
 history_rate = RequestRate(1, Duration.SECOND)
 limiter = Limiter(history_rate)
 session = LimiterSession(limiter=limiter)
@@ -60,7 +52,6 @@ def true_range(high, low, close):
 def atr(high, low, close, period=14):
     tr = true_range(high, low, close)
     atr_vals = pd.Series(index=tr.index, dtype=float)
-    # first value: simple average of first `period` TRs
     if len(tr) >= period:
         atr_vals.iloc[period - 1] = tr.iloc[:period].mean()
         for i in range(period, len(tr)):
@@ -74,7 +65,6 @@ def rsi(series, period=14):
     delta = series.diff()
     up = delta.clip(lower=0)
     down = -delta.clip(upper=0)
-    # Wilder smoothing
     roll_up = up.rolling(window=period, min_periods=period).mean()
     roll_down = down.rolling(window=period, min_periods=period).mean()
     rs = roll_up / roll_down
@@ -120,16 +110,11 @@ def Technical_Rank(clsval):
     ma12 = ema(clsval, 12)
     ma26 = ema(clsval, 26)
 
-    # PPO equivalent
     ppo_ta = 100 * (ma12 - ma26) / ma26
     sig = ema(ppo_ta, 9)
     ppoHist = ppo_ta - sig
     stRsi = 0.05 * rsi(clsval, 14)
-    # slope: use last and 8th from last
-    if len(ppoHist.dropna()) >= 8:
-        slope_val = (ppoHist.iloc[-1] - ppoHist.iloc[-8]) / 3
-    else:
-        slope_val = 0
+    slope_val = (ppoHist.iloc[-1] - ppoHist.iloc[-8]) / 3 if len(ppoHist.dropna()) >= 8 else 0
     stPpo = 0.05 * 100 * slope_val
 
     trank = longtermma + longtermroc + midtermma + midtermroc + stPpo + stRsi
@@ -140,7 +125,7 @@ def Technical_Rank(clsval):
 def efficiency_ratio(window_length, close):
     try:
         lb = window_length
-        a = (close[-1] - close[0]) / (close[0])
+        a = (close[-1] - close[0]) / (close[0]) if close[0] != 0 else 0
         b = 0
         for i in range(lb - 1):
             b += abs(close[i] - close[i + 1])
@@ -188,7 +173,7 @@ def color_survived(val):
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_nse_history(ticker: str, start_date: dt.datetime, end_date: dt.datetime) -> pd.DataFrame:
     if equity_history is None:
-        raise RuntimeError("Cannot fetch NSE history because equity_history is unavailable.")
+        raise RuntimeError("NSE data library not available.")
     symbol = ticker.split(".")[0].upper()
     sd_str = start_date.strftime("%d-%m-%Y")
     ed_str = end_date.strftime("%d-%m-%Y")
@@ -229,10 +214,10 @@ def get_stock_and_name(ticker: str, start_date: dt.datetime, end_date: dt.dateti
         try:
             stock = fetch_nse_history(ticker, start_date, end_date)
             name = get_company_name_nse(ticker.split(".")[0])
-            return stock, name, "nsepython"
+            return stock, name, nse_module_used or "nsepython"
         except Exception as e:
             st.warning(f"NSE fetch failed for {ticker}: {e}. Falling back to yfinance.")
-    stock = fetch_yfinance_history(ticker, start_date, end_date)
+    stock = fetch_yfinance_history(ticker, start=start_date, end=end_date) if False else fetch_yfinance_history(ticker, start_date, end_date)
     try:
         info_name = yf.Ticker(ticker).info.get("longName") or ticker.split(".")[0]
     except Exception:
@@ -265,12 +250,28 @@ def switch(index_ticker):
 # ----------------- Screener -----------------
 
 def stock_screener(index_ticker, end_date, indiaFlag, minerveni_flag):
-    stocklist = pd.read_csv(switch(index_ticker), header=0, index_col=0)
+    # Load list and build tickers
+    df_list = pd.read_csv(switch(index_ticker), header=0)
+    if "Symbol" not in df_list.columns:
+        st.error(f"CSV for {index_ticker} missing 'Symbol' column.")
+        return pd.DataFrame()
+
+    # Prepare tickers (add .NS for Indian)
+    if indiaFlag:
+        tickers = df_list["Symbol"].astype(str).str.strip().apply(lambda s: f"{s}.NS")
+    else:
+        tickers = df_list["Symbol"].astype(str).str.strip()
+
+    # Company name mapping from CSV (uppercase symbol key)
+    symbol_to_name = dict(
+        zip(df_list["Symbol"].astype(str).str.upper(), df_list.get("Company Name", df_list["Symbol"]).astype(str))
+    )
+
     st.header(f"Ranking for {index_ticker} on {end_date}")
     latest_iteration = st.empty()
     filter_stock = st.empty()
     bar = st.progress(0)
-    total = len(stocklist)
+    total = len(tickers)
 
     exportList = pd.DataFrame(
         columns=[
@@ -318,21 +319,24 @@ def stock_screener(index_ticker, end_date, indiaFlag, minerveni_flag):
     n = -1
 
     try:
-        for ticker in stocklist:
+        for ticker in tickers:
             n += 1
             time.sleep(0.10)
-            st.text(f"Pulling {ticker} ({n+1}/{total})")
+            base_symbol = ticker.split(".")[0].upper()
+            st.text(f"Pulling {base_symbol} ({n+1}/{total})")
 
             try:
-                stock, stockName, source = get_stock_and_name(ticker, start_dt, end_date)
+                stock, fetched_name, source = get_stock_and_name(ticker, start_dt, end_date)
             except Exception as e:
-                st.warning(f"Skipping {ticker}: fetch error {e}")
+                st.warning(f"Skipping {base_symbol}: fetch error {e}")
                 latest_iteration.text(f"Stocks Processed: {n+1}/{total}")
                 bar.progress((n + 1) / total)
                 continue
 
+            stockName = symbol_to_name.get(base_symbol, fetched_name)
+
             if stock.shape[0] < 200:
-                st.info(f"{ticker.split('.')[0]} has insufficient data from {source}")
+                st.info(f"{base_symbol} has insufficient data from {source}")
                 latest_iteration.text(f"Stocks Processed: {n+1}/{total}")
                 bar.progress((n + 1) / total)
                 continue
@@ -360,7 +364,7 @@ def stock_screener(index_ticker, end_date, indiaFlag, minerveni_flag):
             rsrating_6M = 100 * ((currentClose - close_126) / close_126)
             rsl_27 = currentClose / moving_average_27
             KAMA_27_raw = kama(stock["Adj Close"], period=27).iloc[-1]
-            KAMA_27 = currentClose / KAMA_27_raw if KAMA_27_raw != 0 else np.nan
+            KAMA_27 = currentClose / KAMA_27_raw if KAMA_27_raw not in (0, np.nan) else np.nan
             MAD = moving_average_21 / moving_average_200
             try:
                 moving_average_200_20 = sma(stock["Adj Close"], 200).iloc[-20]
@@ -428,7 +432,7 @@ def stock_screener(index_ticker, end_date, indiaFlag, minerveni_flag):
                 + (20 * currentClose / stock["Adj Close"].iloc[-63])
                 + (20 * currentClose / stock["Adj Close"].iloc[-126])
                 + (20 * currentClose / stock["Adj Close"].iloc[-189])
-                + (20 * currentClose / stock["Adj Close"].iloc[-252])
+                + (20 * currentClose / stock["Adj Close"].iloc[-252"])
                 - 100
             )
 
@@ -475,7 +479,7 @@ def stock_screener(index_ticker, end_date, indiaFlag, minerveni_flag):
 
             if passed:
                 new_row = {
-                    "Stock": ticker.split(".")[0],
+                    "Stock": base_symbol,
                     "Company Name": stockName,
                     "Close": currentClose,
                     "1D": price_change_1day,
@@ -514,7 +518,7 @@ def stock_screener(index_ticker, end_date, indiaFlag, minerveni_flag):
                     "KAMA": KAMA_27,
                 }
                 exportList = pd.concat([exportList, pd.DataFrame([new_row])], ignore_index=True)
-                filter_stock.text(f"Stock passed: {ticker.split('.')[0]}")
+                filter_stock.text(f"Stock passed: {base_symbol}")
 
             latest_iteration.text(f"Stocks Processed: {n+1}/{total}")
             bar.progress((n + 1) / total)
