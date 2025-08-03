@@ -432,7 +432,7 @@ def stock_screener(index_ticker, end_date, indiaFlag, minerveni_flag):
                 + (20 * currentClose / stock["Adj Close"].iloc[-63])
                 + (20 * currentClose / stock["Adj Close"].iloc[-126])
                 + (20 * currentClose / stock["Adj Close"].iloc[-189])
-                + (20 * currentClose / stock["Adj Close"].iloc[-252"])
+                + (20 * currentClose / stock["Adj Close"].iloc[-252])
                 - 100
             )
 
