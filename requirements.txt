@@ -1,7 +1,6 @@
 nsepythonserver
 nsetools
 yfinance
-ta-lib
 requests-ratelimiter
 yahoo-fin
 pandas>=1.5,<2
