@@ -1,6 +1,9 @@
-pandas-datareader==0.10.0
-yahoo-fin==0.8.9
-yfinance==0.2.54
-matplotlib==3.8.2
-ta-lib-bin==0.4.26
-requests-ratelimiter==0.7.0
+nsepythonserver
+nsetools
+yfinance
+ta-lib
+requests-ratelimiter
+yahoo-fin
+pandas>=1.5,<2
+numpy>=1.24,<2
+matplotlib>=3.7
