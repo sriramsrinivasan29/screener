@@ -1,5 +1,3 @@
-import talib as ta
-import yfinance as yf
 import datetime as dt
 import streamlit as st
 import base64
@@ -7,11 +5,12 @@ import pandas as pd
 import time
 import numpy as np
 from numpy import isnan
+import yfinance as yf
 from nsepython import equity_history  # from nsepythonserver
 from nsetools import Nse
 from requests_ratelimiter import LimiterSession, RequestRate, Limiter, Duration
 
-# Rate limiter for yfinance fallback (you can keep or remove if not needed)
+# Rate limiter (optional for yfinance fallback)
 history_rate = RequestRate(1, Duration.SECOND)
 limiter = Limiter(history_rate)
 session = LimiterSession(limiter=limiter)
@@ -19,7 +18,151 @@ session.headers['User-agent'] = 'tickerpicker/1.0'
 
 nse_obj = Nse()
 
-# ----------------- Utility / caching wrappers -----------------
+# ----------------- Indicator replacements (no ta-lib) -----------------
+
+def sma(series, period):
+    return series.rolling(window=period, min_periods=1).mean()
+
+def ema(series, period):
+    return series.ewm(span=period, adjust=False).mean()
+
+def roc(series, period):
+    return (series / series.shift(period) - 1) * 100
+
+def true_range(high, low, close):
+    prev_close = close.shift(1)
+    tr1 = high - low
+    tr2 = (high - prev_close).abs()
+    tr3 = (low - prev_close).abs()
+    return pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+
+def atr(high, low, close, period=14):
+    tr = true_range(high, low, close)
+    atr_vals = pd.Series(index=tr.index, dtype=float)
+    # first value: simple average of first `period` TRs
+    if len(tr) >= period:
+        atr_vals.iloc[period - 1] = tr.iloc[:period].mean()
+        for i in range(period, len(tr)):
+            prev = atr_vals.iloc[i - 1]
+            atr_vals.iloc[i] = (prev * (period - 1) + tr.iloc[i]) / period
+    else:
+        atr_vals[:] = np.nan
+    return atr_vals
+
+def rsi(series, period=14):
+    delta = series.diff()
+    up = delta.clip(lower=0)
+    down = -delta.clip(upper=0)
+    # Wilder smoothing
+    roll_up = up.rolling(window=period, min_periods=period).mean()
+    roll_down = down.rolling(window=period, min_periods=period).mean()
+    rs = roll_up / roll_down
+    rsi_series = 100 - (100 / (1 + rs))
+    return rsi_series
+
+def linearreg_slope(series, period):
+    idx = np.arange(period)
+    def slope(x):
+        if len(x) < period:
+            return np.nan
+        m, _ = np.polyfit(idx, x, 1)
+        return m
+    return series.rolling(window=period).apply(slope, raw=True)
+
+def kama(series, period=10, fast=2, slow=30):
+    change = series.diff(period)
+    volatility = series.diff().abs().rolling(window=period).sum()
+    er = change.abs() / volatility
+    er = er.replace([np.inf, -np.inf], 0).fillna(0)
+    fast_sc = 2 / (fast + 1)
+    slow_sc = 2 / (slow + 1)
+    sc = (er * (fast_sc - slow_sc) + slow_sc) ** 2
+    kama_series = pd.Series(index=series.index, dtype=float)
+    if len(series) >= period:
+        kama_series.iloc[period - 1] = series.iloc[:period].mean()
+        for i in range(period, len(series)):
+            kama_series.iloc[i] = kama_series.iloc[i - 1] + sc.iloc[i] * (series.iloc[i] - kama_series.iloc[i - 1])
+    return kama_series
+
+# ----------------- Supporting analytics functions -----------------
+
+def Technical_Rank(clsval):
+    ma200 = ema(clsval, 200)
+    ma50 = ema(clsval, 50)
+
+    longtermma = 0.30 * 100 * (clsval - ma200) / ma200
+    longtermroc = 0.30 * roc(clsval, 125)
+
+    midtermma = 0.15 * 100 * (clsval - ma50) / ma50
+    midtermroc = 0.15 * roc(clsval, 20)
+
+    ma12 = ema(clsval, 12)
+    ma26 = ema(clsval, 26)
+
+    # PPO equivalent
+    ppo_ta = 100 * (ma12 - ma26) / ma26
+    sig = ema(ppo_ta, 9)
+    ppoHist = ppo_ta - sig
+    stRsi = 0.05 * rsi(clsval, 14)
+    # slope: use last and 8th from last
+    if len(ppoHist.dropna()) >= 8:
+        slope_val = (ppoHist.iloc[-1] - ppoHist.iloc[-8]) / 3
+    else:
+        slope_val = 0
+    stPpo = 0.05 * 100 * slope_val
+
+    trank = longtermma + longtermroc + midtermma + midtermroc + stPpo + stRsi
+    trank_last = trank.iloc[-1] if not trank.empty else 0
+    trank_1 = 0 if trank_last < 0 else trank_last
+    return 100 if trank_1 > 100 else trank_1
+
+def efficiency_ratio(window_length, close):
+    try:
+        lb = window_length
+        a = (close[-1] - close[0]) / (close[0])
+        b = 0
+        for i in range(lb - 1):
+            b += abs(close[i] - close[i + 1])
+        c = (a / b) * 100 if b != 0 else 0
+        return c
+    except Exception:
+        return 0
+
+def eff_ratio(close):
+    direction = (close[-1] - close[0]) / (close[0]) if close[0] != 0 else 0
+    volatility = np.sum(np.absolute(np.diff(close, axis=0)), axis=0)
+    return direction / volatility if volatility != 0 else 0
+
+def compute(window_length, assets, close, high, low):
+    lb = window_length
+    HL = np.absolute(np.diff(high[1:(lb)] - low[1:(lb)], axis=0))
+    HL[np.isnan(HL)] = 0
+    HL_val = HL.max() if HL.size else 0
+
+    HC = np.absolute(np.diff(high[1:(lb)] - close[0 : (lb - 1)], axis=0))
+    HC[np.isnan(HC)] = 0
+    HC_val = HC.max() if HC.size else 0
+
+    LC = np.absolute(np.diff(low[1:(lb)] - close[0 : (lb - 1)], axis=0))
+    LC[np.isnan(LC)] = 0
+    LC_val = LC.max() if LC.size else 0
+
+    c = HL_val + HC_val + LC_val
+    return abs(close[-1] - close[0]) / c if c != 0 else 0
+
+def annualised_sharpe(returns, N=252):
+    return np.sqrt(N) * returns.mean() / returns.std() if returns.std() != 0 else 0
+
+def filedownload(df):
+    csv = df.to_csv(index=False)
+    b64 = base64.b64encode(csv.encode()).decode()
+    return f'<a href="data:file/csv;base64,{b64}" download="Momentum Ranking.csv">Download CSV File</a>'
+
+def color_survived(val):
+    color = "green" if val > 0 else "red"
+    return f"background-color: {color}"
+
+# ----------------- Data fetch / caching -----------------
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_nse_history(ticker: str, start_date: dt.datetime, end_date: dt.datetime) -> pd.DataFrame:
@@ -36,7 +179,6 @@ def fetch_nse_history(ticker: str, start_date: dt.datetime, end_date: dt.datetim
         df.set_index("Date", inplace=True)
     else:
         df.index = pd.to_datetime(df.index)
-    # Ensure required columns exist
     for col in ["High", "Low", "Volume", "Adj Close"]:
         if col not in df.columns:
             df[col] = np.nan
@@ -60,9 +202,6 @@ def get_company_name_nse(symbol: str) -> str:
         return symbol
 
 def get_stock_and_name(ticker: str, start_date: dt.datetime, end_date: dt.datetime):
-    """
-    Returns (stock_df, company_name, source_used)
-    """
     if ticker.endswith(".NS"):
         try:
             stock = fetch_nse_history(ticker, start_date, end_date)
@@ -70,7 +209,6 @@ def get_stock_and_name(ticker: str, start_date: dt.datetime, end_date: dt.dateti
             return stock, name, "nsepython"
         except Exception as e:
             st.warning(f"NSE fetch failed for {ticker}: {e}. Falling back to yfinance.")
-    # fallback or non-NSE
     stock = fetch_yfinance_history(ticker, start_date, end_date)
     try:
         info_name = yf.Ticker(ticker).info.get("longName") or ticker.split(".")[0]
@@ -78,81 +216,7 @@ def get_stock_and_name(ticker: str, start_date: dt.datetime, end_date: dt.dateti
         info_name = ticker.split(".")[0]
     return stock, info_name, "yfinance"
 
-# ----------------- Original analytics functions -----------------
-
-def Technical_Rank(clsval):
-    ma200 = ta.EMA(clsval, timeperiod=200)
-    ma50 = ta.EMA(clsval, timeperiod=50)
-
-    longtermma = 0.30 * 100 * (clsval - ma200) / ma200
-    longtermroc = 0.30 * ta.ROC(clsval, timeperiod=125)
-
-    midtermma = 0.15 * 100 * (clsval - ma50) / ma50
-    midtermroc = 0.15 * ta.ROC(clsval, timeperiod=20)
-
-    ma12 = ta.EMA(clsval, timeperiod=12)
-    ma26 = ta.EMA(clsval, timeperiod=26)
-
-    ppo_ta = 100 * (ma12 - ma26) / ma26
-    sig = ta.EMA(ppo_ta, timeperiod=9)
-    ppoHist = ppo_ta - sig
-    stRsi = 0.05 * ta.RSI(clsval, timeperiod=14)
-    slope = (ppoHist[-1] - ppoHist[-8]) / 3
-    stPpo = 0.05 * 100 * slope
-
-    trank = longtermma + longtermroc + midtermma + midtermroc + stPpo + stRsi
-    trank_1 = 0 if trank[-1] < 0 else trank[-1]
-    return 100 if trank_1 > 100 else trank_1
-
-def efficiency_ratio(window_length, close):
-    try:
-        lb = window_length
-        a = (close[-1] - close[0]) / (close[0])
-        b = 0
-        i = 0
-        while i < lb - 1:
-            b = b + abs(close[i] - close[i + 1])
-            i += 1
-        c = (a / b) * 100
-        return c
-    except Exception:
-        return 0
-
-def eff_ratio(close):
-    direction = (close[-1] - close[0]) / (close[0])
-    volatility = np.sum(np.absolute(np.diff(close, axis=0)), axis=0)
-    return direction / volatility if volatility != 0 else 0
-
-def compute(window_length, assets, close, high, low):
-    lb = window_length
-    HL = np.absolute(np.diff(high[1:(lb)] - low[1:(lb)], axis=0))
-    HL[np.isnan(HL)] = 0
-    HL = HL.max() if HL.size else 0
-
-    HC = np.absolute(np.diff(high[1:(lb)] - close[0 : (lb - 1)], axis=0))
-    HC[np.isnan(HC)] = 0
-    HC = HC.max() if HC.size else 0
-
-    LC = np.absolute(np.diff(low[1:(lb)] - close[0 : (lb - 1)], axis=0))
-    LC[np.isnan(LC)] = 0
-    LC = LC.max() if LC.size else 0
-
-    c = HL + HC + LC
-    return abs(close[-1] - close[0]) / c if c != 0 else 0
-
-def annualised_sharpe(returns, N=252):
-    return np.sqrt(N) * returns.mean() / returns.std() if returns.std() != 0 else 0
-
-def filedownload(df):
-    csv = df.to_csv(index=False)
-    b64 = base64.b64encode(csv.encode()).decode()
-    return f'<a href="data:file/csv;base64,{b64}" download="Momentum Ranking.csv">Download CSV File</a>'
-
-def color_survived(val):
-    color = 'green' if val > 0 else 'red'
-    return f'background-color: {color}'
-
-# ----------------- Index list mapping -----------------
+# ----------------- Index mapping -----------------
 
 def switch(index_ticker):
     mapping = {
@@ -175,20 +239,15 @@ def switch(index_ticker):
     }
     return mapping.get(index_ticker)
 
-# ----------------- Screening logic -----------------
+# ----------------- Screener -----------------
 
 def stock_screener(index_ticker, end_date, indiaFlag, minerveni_flag):
     stocklist = pd.read_csv(switch(index_ticker), header=0, index_col=0)
-    st.header(f'Ranking for {index_ticker} on {end_date}')
+    st.header(f"Ranking for {index_ticker} on {end_date}")
     latest_iteration = st.empty()
     filter_stock = st.empty()
     bar = st.progress(0)
     total = len(stocklist)
-
-    if indiaFlag:
-        Std_Nifty_252 = 1
-    else:
-        Std_Nifty_252 = 1
 
     exportList = pd.DataFrame(
         columns=[
@@ -240,19 +299,18 @@ def stock_screener(index_ticker, end_date, indiaFlag, minerveni_flag):
             n += 1
             time.sleep(0.10)
             st.text(f"Pulling {ticker} ({n+1}/{total})")
-            stock_industry = ""
 
             try:
                 stock, stockName, source = get_stock_and_name(ticker, start_dt, end_date)
             except Exception as e:
                 st.warning(f"Skipping {ticker}: fetch error {e}")
-                latest_iteration.text(f'Stocks Processed: {n+1}/{total}')
+                latest_iteration.text(f"Stocks Processed: {n+1}/{total}")
                 bar.progress((n + 1) / total)
                 continue
 
             if stock.shape[0] < 200:
                 st.info(f"{ticker.split('.')[0]} has insufficient data from {source}")
-                latest_iteration.text(f'Stocks Processed: {n+1}/{total}')
+                latest_iteration.text(f"Stocks Processed: {n+1}/{total}")
                 bar.progress((n + 1) / total)
                 continue
 
@@ -261,16 +319,16 @@ def stock_screener(index_ticker, end_date, indiaFlag, minerveni_flag):
                 close_252 = stock["Adj Close"].iloc[-252]
                 close_126 = stock["Adj Close"].iloc[-126]
             except Exception:
-                latest_iteration.text(f'Stocks Processed: {n+1}/{total}')
+                latest_iteration.text(f"Stocks Processed: {n+1}/{total}")
                 bar.progress((n + 1) / total)
                 continue
 
-            moving_average_4 = ta.SMA(stock["Adj Close"], timeperiod=4)[-1]
-            moving_average_50 = ta.SMA(stock["Adj Close"], timeperiod=50)[-1]
-            moving_average_150 = ta.SMA(stock["Adj Close"], timeperiod=150)[-1]
-            moving_average_21 = ta.SMA(stock["Adj Close"], timeperiod=21)[-1]
-            moving_average_200 = ta.SMA(stock["Adj Close"], timeperiod=200)[-1]
-            moving_average_27 = ta.SMA(stock["Adj Close"], timeperiod=27)[-1]
+            moving_average_4 = sma(stock["Adj Close"], 4).iloc[-1]
+            moving_average_50 = sma(stock["Adj Close"], 50).iloc[-1]
+            moving_average_150 = sma(stock["Adj Close"], 150).iloc[-1]
+            moving_average_21 = sma(stock["Adj Close"], 21).iloc[-1]
+            moving_average_200 = sma(stock["Adj Close"], 200).iloc[-1]
+            moving_average_27 = sma(stock["Adj Close"], 27).iloc[-1]
             average_Close = stock["Adj Close"].rolling(window=21).median().iloc[-1]
             average_Volume = stock["Volume"].rolling(window=21).median().iloc[-1]
             Median_Trading_Value = average_Close * average_Volume
@@ -278,11 +336,11 @@ def stock_screener(index_ticker, end_date, indiaFlag, minerveni_flag):
             rsrating = 100 * ((currentClose - close_252) / close_252)
             rsrating_6M = 100 * ((currentClose - close_126) / close_126)
             rsl_27 = currentClose / moving_average_27
-            KAMA_27 = ta.KAMA(stock["Adj Close"], timeperiod=27)[-1]
-            KAMA_27 = currentClose / KAMA_27
+            KAMA_27_raw = kama(stock["Adj Close"], period=27).iloc[-1]
+            KAMA_27 = currentClose / KAMA_27_raw if KAMA_27_raw != 0 else np.nan
             MAD = moving_average_21 / moving_average_200
             try:
-                moving_average_200_20 = ta.SMA(stock["Adj Close"], timeperiod=200)[-20]
+                moving_average_200_20 = sma(stock["Adj Close"], 200).iloc[-20]
             except Exception:
                 moving_average_200_20 = 0
 
@@ -300,21 +358,21 @@ def stock_screener(index_ticker, end_date, indiaFlag, minerveni_flag):
             Coffecient_Variation = (Std_stock_252 / moving_average_200) * 100
             price_change_1day = stock["Adj Close"].pct_change(periods=1).iloc[-1] * 100
 
-            moving_average_89 = ta.SMA(stock["Adj Close"], timeperiod=89)[-1]
-            tr = ta.TRANGE(stock["High"], stock["Low"], stock["Adj Close"])
-            ATR = ta.ATR(stock["High"], stock["Low"], stock["Adj Close"], timeperiod=200)[-1]
+            moving_average_89 = sma(stock["Adj Close"], 89).iloc[-1]
+            tr = true_range(stock["High"], stock["Low"], stock["Adj Close"])
+            ATR = atr(stock["High"], stock["Low"], stock["Adj Close"], period=200).iloc[-1]
             positionscore = ((10000 / currentClose) * ATR) / 100
-            moving_average_89EMA_TR = ta.EMA(tr, timeperiod=89)[-1]
-            pgo = (currentClose - moving_average_89) / moving_average_89EMA_TR
+            moving_average_89EMA_TR = ema(tr, 89).iloc[-1]
+            pgo = (currentClose - moving_average_89) / moving_average_89EMA_TR if moving_average_89EMA_TR != 0 else 0
             pricetoMA = ((currentClose - moving_average_200) / moving_average_200) * 100
-            efficiency_ratio1 = efficiency_ratio(252, stock["Adj Close"].iloc[-252:])
-            efficiency_ratio2 = eff_ratio(stock["Adj Close"].iloc[-252:])
+            efficiency_ratio1 = efficiency_ratio(252, stock["Adj Close"].iloc[-252:].values)
+            efficiency_ratio2 = eff_ratio(stock["Adj Close"].iloc[-252:].values)
             eff = compute(
                 253,
-                stock["Adj Close"].iloc[-252:],
-                stock["Adj Close"].iloc[-252:],
-                stock["High"].iloc[-252:],
-                stock["Low"].iloc[-252:],
+                stock["Adj Close"].iloc[-252:].values,
+                stock["Adj Close"].iloc[-252:].values,
+                stock["High"].iloc[-252:].values,
+                stock["Low"].iloc[-252:].values,
             )
 
             score = ((moving_average_4 - low_of_52week) / (high_of_52week - low_of_52week)) * 100
@@ -324,7 +382,7 @@ def stock_screener(index_ticker, end_date, indiaFlag, minerveni_flag):
             factor4 = price_change_13WK
             factor5 = price_change_26WK
 
-            leg_momentum = ta.LINEARREG_SLOPE(stock["Adj Close"], timeperiod=90)[-1]
+            leg_momentum = linearreg_slope(stock["Adj Close"], 90).iloc[-1]
             PCRS = (
                 (currentClose / high_of_52week)
                 + (currentClose / low_of_52week)
@@ -358,7 +416,7 @@ def stock_screener(index_ticker, end_date, indiaFlag, minerveni_flag):
             twelve_month_rs = 0.2 * (currentClose / stock["Adj Close"].iloc[-252])
             rs_rating = (three_month_rs + six_month_rs + nine_month_rs + twelve_month_rs) * 100
 
-            shorttermroc = ta.ROC(stock["Adj Close"], timeperiod=20)[-1]
+            shorttermroc = roc(stock["Adj Close"], 20).iloc[-1]
             technical_Rank = Technical_Rank(stock["Adj Close"])
 
             # Conditions
@@ -377,7 +435,18 @@ def stock_screener(index_ticker, end_date, indiaFlag, minerveni_flag):
             condition_14 = currentClose >= (0.75 * ATH)
 
             if minerveni_flag == "Yes":
-                passed = condition_1 and condition_2 and condition_3 and condition_4 and condition_5 and condition_6 and condition_7 and condition_8 and condition_10 and condition_1
+                passed = (
+                    condition_1
+                    and condition_2
+                    and condition_3
+                    and condition_4
+                    and condition_5
+                    and condition_6
+                    and condition_7
+                    and condition_8
+                    and condition_10
+                    and condition_1
+                )
             else:
                 passed = condition_10
 
